@@ -9,30 +9,78 @@
 </head>
 <body>
   <h2>ABSENSI QR SEKOLAH</h2>
-  <p>Pemindai QR Siswa</p>
 
+  <p>Pilih jenis absensi:</p>
+  <button onclick="pilihJenis('MASUK')">ABSENSI MASUK</button>
+  <button onclick="pilihJenis('PULANG')">ABSENSI PULANG</button>
+
+  <p id="jenis">Belum memilih absensi.</p>
   <button onclick="mulaiScan()">MULAI SCAN QR</button>
+
   <div id="reader" style="width:100%;max-width:400px;margin-top:20px"></div>
-  <p id="hasil">Belum ada QR yang dipindai.</p>
+  <p id="hasil">Siap melakukan absensi.</p>
 
   <script>
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzq38pX7NnLDIq_hvZGFyMAyxriuNvLMV1OZ52LN1BLaodBU6TSyKes6vam-PwzjDnoDw/exec";
+
     let scanner;
+    let jenisAbsensi = "";
+    let sedangProses = false;
+
+    function pilihJenis(jenis) {
+      jenisAbsensi = jenis;
+      document.getElementById("jenis").innerText =
+        "Jenis absensi: " + jenis;
+    }
 
     function mulaiScan() {
+      if (!jenisAbsensi) {
+        alert("Pilih MASUK atau PULANG terlebih dahulu.");
+        return;
+      }
+
       scanner = new Html5Qrcode("reader");
 
       scanner.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
         function(teks) {
-          document.getElementById("hasil").innerText =
-            "QR TERBACA! NIPD: " + teks;
-          scanner.stop();
+          if (sedangProses) return;
+          sedangProses = true;
+
+          scanner.stop().then(function() {
+            kirimAbsensi(teks);
+          });
         },
         function(error) {}
       ).catch(function(error) {
         document.getElementById("hasil").innerText =
           "Kamera gagal dibuka: " + error;
+      });
+    }
+
+    function kirimAbsensi(nipd) {
+      document.getElementById("hasil").innerText =
+        "Mengirim absensi NIPD: " + nipd;
+
+      fetch(URL_APPS_SCRIPT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          nipd: nipd,
+          jenis: jenisAbsensi
+        })
+      }).then(function() {
+        document.getElementById("hasil").innerText =
+          "Permintaan dikirim. Silakan periksa Google Sheets.";
+      }).catch(function(error) {
+        document.getElementById("hasil").innerText =
+          "Pengiriman gagal: " + error;
+      }).finally(function() {
+        sedangProses = false;
       });
     }
   </script>
