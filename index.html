@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Absensi QR Sekolah</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+  <h2>ABSENSI QR SEKOLAH</h2>
+  <p>Pemindai QR Siswa</p>
+
+  <button onclick="mulaiScan()">MULAI SCAN QR</button>
+  <div id="reader" style="width:100%;max-width:400px;margin-top:20px"></div>
+  <p id="hasil">Belum ada QR yang dipindai.</p>
+
+  <script>
+    let scanner;
+
+    function mulaiScan() {
+      scanner = new Html5Qrcode("reader");
+
+      scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        function(teks) {
+          document.getElementById("hasil").innerText =
+            "QR TERBACA! NIPD: " + teks;
+          scanner.stop();
+        },
+        function(error) {}
+      ).catch(function(error) {
+        document.getElementById("hasil").innerText =
+          "Kamera gagal dibuka: " + error;
+      });
+    }
+  </script>
+</body>
+</html>
